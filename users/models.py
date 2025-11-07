@@ -1,7 +1,8 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
-from lms.models import Lessons, Course
+from lms.models import Course, Lessons
+
 
 class User(AbstractUser):
     username = None
@@ -16,6 +17,7 @@ class User(AbstractUser):
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
+
 
 class Payments(models.Model):
     METHOD_CHOICES = [
