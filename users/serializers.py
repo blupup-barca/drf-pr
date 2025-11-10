@@ -1,21 +1,8 @@
 from rest_framework import serializers
+from .models import Payment
 
-from users.models import Payments, User
 
-
-class UserSerializer(serializers.ModelSerializer):
+class PaymentSerializer(serializers.ModelSerializer):
     class Meta:
-        model = User
-        fields = "__all__"
-
-
-class PaymentsSerializer(serializers.ModelSerializer):
-
-    def validate(self, data):
-        if not data.get("course") and not data.get("lessons"):
-            raise serializers.ValidationError("Нужно выбрать курс или урок для оплаты.")
-        return data
-
-    class Meta:
-        model = Payments
-        fields = "__all__"
+        model = Payment
+        fields = '__all__'

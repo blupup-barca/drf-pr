@@ -1,68 +1,32 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from lms.models import Course, Lesson
 
-from lms.models import Course, Lessons
-
-
-class User(AbstractUser):
+class CustomUser(AbstractUser):
     username = None
-    email = models.EmailField(unique=True, verbose_name="email")
-    phone_number = models.CharField(
-        max_length=15, null=True, blank=True, verbose_name="номер телефона"
-    )
-    avatar = models.ImageField(
-        upload_to="avatars/", blank=True, null=True, verbose_name="фото"
-    )
-    country = models.CharField(max_length=50, blank=True, verbose_name="страна")
+    email = models.EmailField(unique=True)
+    phone_number = models.CharField(max_length=15, blank=True, null=True)
+    city = models.CharField(max_length=100, blank=True, null=True)
+    avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
 
-    USERNAME_FIELD = "email"
+    USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
 
+    def __str__(self):
+        return self.email
 
-class Payments(models.Model):
-    METHOD_CHOICES = [
-        ("Наличные", "Наличные"),
-        ("Перевод", "Перевод"),
-    ]
 
-    user = models.ForeignKey(
-        User,
-        verbose_name="платежи",
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
+PAYMENT_METHOD_CHOICES = (
+        ('cash', 'Наличные'),
+        ('transfer', 'Перевод на счёт')
     )
-    date = models.DateField(auto_now=True, verbose_name="дата платежа")
-    course = models.ForeignKey(
-        Course,
-        related_name="paid_course",
-        verbose_name="оплаченный курс",
-        on_delete=models.CASCADE,
-        blank=True,
-        null=True,
-    )
-    lessons = models.ForeignKey(
-        Lessons,
-        related_name="paid_lesson",
-        verbose_name="оплаченный урок",
-        on_delete=models.CASCADE,
-        blank=True,
-        null=True,
-    )
-    payment_amount = models.IntegerField(verbose_name="сумма платежа")
-    payment_method = models.CharField(max_length=20, choices=METHOD_CHOICES)
-    session_id_course = models.CharField(
-        max_length=250, null=True, blank=True, verbose_name="id сессии"
-    )
-    link_course = models.URLField(
-        max_length=400, null=True, blank=True, verbose_name="ссылка на оплату"
-    )
-    session_id_lesson = models.CharField(
-        max_length=250, null=True, blank=True, verbose_name="id сессии"
-    )
-    link_lesson = models.URLField(
-        max_length=400, null=True, blank=True, verbose_name="ссылка на оплату"
-    )
+class Payment(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    payment_date = models.DateTimeField(auto_now_add=True)
+    paid_course = models.ForeignKey(Course, on_delete=models.SET_NULL, null=True, blank=True)
+    paid_lesson = models.ForeignKey(Lesson, on_delete=models.SET_NULL, null=True, blank=True)
+    amount = models.DecimalField(max_digits=8, decimal_places=2)
+    method = models.CharField(max_length=10, choices=PAYMENT_METHOD_CHOICES)
 
     def __str__(self):
-        return f"{self.user.email} — {self.payment_amount} ₽ — {self.date}"
+        return f"Платёж №{self.id}, Пользователь: {self.user.email}, Сумма: {self.amount}"

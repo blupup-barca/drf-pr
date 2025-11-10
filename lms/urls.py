@@ -1,26 +1,20 @@
-from django.urls import path
+from django.contrib import admin
+from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-
-from lms.apps import LmsConfig
-
-from .views import (CourseViewSet, LessonCreateAPIView, LessonDestroyAPIView,
-                    LessonListAPIView, LessonRetrieveAPIView,
-                    LessonUpdateAPIView)
-
-app_name = LmsConfig.name
+from .views import CourseViewSet, LessonListCreateAPI, LessonRetrieveUpdateDeleteAPI
+from django.conf.urls.static import static
+from django.conf import settings
 
 router = DefaultRouter()
-router.register(r"course", CourseViewSet, basename="course")
+router.register(r'courses', CourseViewSet)
+
 
 urlpatterns = [
-    path("lesson/create/", LessonCreateAPIView.as_view(), name="lesson_create"),
-    path("lessons/", LessonListAPIView.as_view(), name="lesson_list"),
-    path("lesson/<int:pk>/", LessonRetrieveAPIView.as_view(), name="lesson_get"),
-    path(
-        "lesson/update/<int:pk>/", LessonUpdateAPIView.as_view(), name="lesson_update"
-    ),
-    path(
-        "lesson/delete/<int:pk>/", LessonDestroyAPIView.as_view(), name="lesson_delete"
-    ),
+    path('admin/', admin.site.urls),
+    path('', include('lms.urls')),
+    path('lessons/', LessonListCreateAPI.as_view(), name='lesson-list-create'),
+    path('lessons/<int:pk>/', LessonRetrieveUpdateDeleteAPI.as_view(), name='lesson-retrieve-update-delete'),
 ]
-urlpatterns += router.urls
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

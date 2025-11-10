@@ -1,24 +1,20 @@
-from rest_framework.serializers import ModelSerializer, SerializerMethodField
+from rest_framework import serializers
+from .models import Course, Lesson
 
-from lms.models import Course, Lessons
 
 
-class LessonsSerializer(ModelSerializer):
+class LessonSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Lessons
-        fields = "__all__"
+        model = Lesson
+        fields = '__all__'
 
+class CourseSerializer(serializers.ModelSerializer):
+    number_of_lessons = serializers.IntegerField(source='num_lessons', read_only=True)
+    lessons = LessonSerializer(many=True, read_only=True)
 
-class CourseSerializer(ModelSerializer):
-    number_of_lessons = SerializerMethodField()
-    lessons = LessonsSerializer(many=True, read_only=True)
+    class Meta:
+        model = Course
+        fields = ['id', 'title', 'preview_image', 'description', 'number_of_lessons']
 
-
-@staticmethod
-def get_number_of_lessons(instance):
-    return instance.lessons.count()
-
-
-class Meta:
-    model = Course
-    fields = "__all__"
+    def get_number_of_lessons(self, obj):
+        return obj.lessons.count()
