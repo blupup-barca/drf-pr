@@ -1,18 +1,57 @@
+from rest_framework.filters import OrderingFilter
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import permissions
 from rest_framework.viewsets import ModelViewSet
-from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
-from .models import Course, Lesson
-from .serializers import CourseSerializer, LessonSerializer
+from rest_framework.generics import CreateAPIView, ListAPIView, RetrieveAPIView, UpdateAPIView, DestroyAPIView
+
+from lms.models import Course, Lesson
+from lms.serializers import CourseSerializer, LessonSerializer
 
 
 class CourseViewSet(ModelViewSet):
-    queryset = Course.objects.annotate(num_lessons=models.Count('lessons'))
+    """ Представление для курса. """
+
     serializer_class = CourseSerializer
+    queryset = Course.objects.all()
+    permission_classes = [permissions.AllowAny]
+    filter_backends = [DjangoFilterBackend]
 
-class LessonListCreateAPI(ListCreateAPIView):
+
+class LessonCreateAPIView(CreateAPIView):
+    """ Создание урока. """
+
+    serializer_class = LessonSerializer
+    permission_classes = [permissions.AllowAny]
+
+
+class LessonListAPIView(ListAPIView):
+    """ Просмотр списка уроков. """
+
     queryset = Lesson.objects.all()
     serializer_class = LessonSerializer
+    filter_backends = [DjangoFilterBackend, OrderingFilter]
+    search_fields = ["name", "description", "course"]
+    ordering_fields = ["name"]
+    ordering = ["-name"]
 
 
-class LessonRetrieveUpdateDeleteAPI(RetrieveUpdateDestroyAPIView):
-    queryset = Lesson.objects.all()
+class LessonRetrieveAPIView(RetrieveAPIView):
+    """ Просмотр одного урока. """
+
     serializer_class = LessonSerializer
+    queryset = Lesson.objects.all()
+
+
+class LessonUpdateAPIView(UpdateAPIView):
+    """ Обновление одного урока. """
+
+    serializer_class = LessonSerializer
+    queryset = Lesson.objects.all()
+    permission_classes = [permissions.AllowAny]
+
+
+class LessonDeleteAPIView(DestroyAPIView):
+    """ Удаление урока. """
+
+    queryset = Lesson.objects.all()
+    permission_classes = [permissions.AllowAny]

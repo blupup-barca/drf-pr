@@ -28,10 +28,9 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
-    'users',
-    'lms',
-    'django_filters'
-
+    "lms",
+    "users",
+    "django_filters",
 ]
 
 MIDDLEWARE = [
@@ -125,4 +124,4 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-AUTH_USER_MODEL = 'users.CustomUser'
+AUTH_USER_MODEL = "users.CustomUser"

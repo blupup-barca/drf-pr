@@ -1,20 +1,28 @@
 from rest_framework import serializers
-from .models import Course, Lesson
-
+from lms.models import Course, Lesson
+from users.models import Payments
 
 
 class LessonSerializer(serializers.ModelSerializer):
+    """ Сериализатор для урока."""
+
     class Meta:
         model = Lesson
-        fields = '__all__'
+        fields = ['name', 'description', 'video', 'course', ]
+
 
 class CourseSerializer(serializers.ModelSerializer):
-    number_of_lessons = serializers.IntegerField(source='num_lessons', read_only=True)
-    lessons = LessonSerializer(many=True, read_only=True)
+    """ Сериализатор для курса."""
+
+    lesson_count = serializers.SerializerMethodField()
+    lesson = LessonSerializer(many=True, read_only=True, source="lesson_set")
+
 
     class Meta:
         model = Course
-        fields = ['id', 'title', 'preview_image', 'description', 'number_of_lessons']
+        fields = ['name', 'description', 'preview', ]
 
-    def get_number_of_lessons(self, obj):
-        return obj.lessons.count()
+    def get_lesson_count(self, instance):
+        return instance.lesson_set.count()
+
+

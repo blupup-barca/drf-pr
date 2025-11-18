@@ -1,11 +1,35 @@
-from rest_framework.generics import ListAPIView
-from .models import Payment
-from .serializers import PaymentSerializer
-from .filters import PaymentFilter
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import OrderingFilter
+from rest_framework import permissions
+
+from rest_framework.generics import CreateAPIView, ListAPIView, RetrieveAPIView
+
+from users.models import Payments, CustomUser
+from users.serializers import PaymentsSerializer, CustomUserSerializer
 
 
-class PaymentListAPI(ListAPIView):
-    queryset = Payment.objects.all()
-    serializer_class = PaymentSerializer
-    filter_backends = [django_filters.rest_framework.DjangoFilterBackend]
-    filterset_class = PaymentFilter
+class CustomUserDetail(RetrieveAPIView):
+    """ Просмотр данных пользователя. """
+
+    queryset = CustomUser.objects.all()
+    serializer_class = CustomUserSerializer
+
+
+class PaymentCreateAPIView(CreateAPIView):
+    """ Создание платежа. """
+
+    queryset = Payments.objects.all()
+    serializer_class = PaymentsSerializer
+    permission_classes = [permissions.AllowAny]
+
+
+class PaymentListAPIView(ListAPIView):
+    """ Список платежей. """
+
+    queryset = Payments.objects.all()
+    serializer_class = PaymentsSerializer
+
+    filter_backends = [DjangoFilterBackend, OrderingFilter]
+    search_fields = ["course", "lesson", "payment_method"]
+    ordering_fields = ["payment_day"]
+    ordering = ["-payment_day"]
