@@ -8,7 +8,7 @@ from users.models import Payments, CustomUser
 
 
 class Command(BaseCommand):
-    """ Заполнение таблицы 'платежи'. """
+    """Заполнение таблицы 'платежи'."""
 
     help = "Заполнение таблицы 'платежи'. "
 

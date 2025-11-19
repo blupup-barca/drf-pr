@@ -1,10 +1,34 @@
 from django.urls import path
 
-from users.views import CustomUserDetail, PaymentListAPIView
 
-app_name = 'users'
+from users.views import (
+    CustomUserDetail,
+    PaymentListAPIView,
+    CreateCustomUser,
+    UpdateCustomUser,
+    DeleteCustomUser,
+    PaymentCreateAPIView,
+    PaymentUpdateAPIView,
+    PaymentDeleteAPIView,
+)
+
+app_name = "users"
 
 urlpatterns = [
-    path('user/detail/<int:pk>/', CustomUserDetail.as_view(), name='user_detail'),
-    path('payments/list/', PaymentListAPIView.as_view(), name='payment_list'),
-    ]
+    path("user/create/", CreateCustomUser.as_view(), name="user_create"),
+    path("user/detail/<int:pk>/", CustomUserDetail.as_view(), name="user_detail"),
+    path("user/update/<int:pk>/", UpdateCustomUser.as_view(), name="user_update"),
+    path("user/delete/<int:pk>/", DeleteCustomUser.as_view(), name="user_delete"),
+    path("payments/create/", PaymentCreateAPIView.as_view(), name="payment_create"),
+    path("payments/list/", PaymentListAPIView.as_view(), name="payment_list"),
+    path(
+        "payments/update/<int:pk>/",
+        PaymentUpdateAPIView.as_view(),
+        name="payment_update",
+    ),
+    path(
+        "payments/delete/<int:pk>/",
+        PaymentDeleteAPIView.as_view(),
+        name="payment_delete",
+    ),
+]
