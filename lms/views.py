@@ -1,37 +1,57 @@
-from rest_framework import viewsets
-from rest_framework.generics import (CreateAPIView, DestroyAPIView,
-                                     ListAPIView, RetrieveAPIView,
-                                     UpdateAPIView)
+from rest_framework.filters import OrderingFilter
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import permissions
+from rest_framework.viewsets import ModelViewSet
+from rest_framework.generics import CreateAPIView, ListAPIView, RetrieveAPIView, UpdateAPIView, DestroyAPIView
 
-from .models import Course, Lessons
-from .serializers import CourseSerializer, LessonsSerializer
+from lms.models import Course, Lesson
+from lms.serializers import CourseSerializer, LessonSerializer
 
 
-class CourseViewSet(viewsets.ModelViewSet):
-    queryset = Course.objects.all()
+class CourseViewSet(ModelViewSet):
+    """ Представление для курса. """
+
     serializer_class = CourseSerializer
+    queryset = Course.objects.all()
+    permission_classes = [permissions.AllowAny]
+    filter_backends = [DjangoFilterBackend]
 
 
 class LessonCreateAPIView(CreateAPIView):
-    serializer_class = LessonsSerializer
-    queryset = Lessons.objects.all()
+    """ Создание урока. """
+
+    serializer_class = LessonSerializer
+    permission_classes = [permissions.AllowAny]
 
 
 class LessonListAPIView(ListAPIView):
-    serializer_class = LessonsSerializer
-    queryset = Lessons.objects.all()
+    """ Просмотр списка уроков. """
 
-
-class LessonUpdateAPIView(UpdateAPIView):
-    serializer_class = LessonsSerializer
-    queryset = Lessons.objects.all()
-
-
-class LessonDestroyAPIView(DestroyAPIView):
-    serializer_class = LessonsSerializer
-    queryset = Lessons.objects.all()
+    queryset = Lesson.objects.all()
+    serializer_class = LessonSerializer
+    filter_backends = [DjangoFilterBackend, OrderingFilter]
+    search_fields = ["name", "description", "course"]
+    ordering_fields = ["name"]
+    ordering = ["-name"]
 
 
 class LessonRetrieveAPIView(RetrieveAPIView):
-    serializer_class = LessonsSerializer
-    queryset = Lessons.objects.all()
+    """ Просмотр одного урока. """
+
+    serializer_class = LessonSerializer
+    queryset = Lesson.objects.all()
+
+
+class LessonUpdateAPIView(UpdateAPIView):
+    """ Обновление одного урока. """
+
+    serializer_class = LessonSerializer
+    queryset = Lesson.objects.all()
+    permission_classes = [permissions.AllowAny]
+
+
+class LessonDeleteAPIView(DestroyAPIView):
+    """ Удаление урока. """
+
+    queryset = Lesson.objects.all()
+    permission_classes = [permissions.AllowAny]

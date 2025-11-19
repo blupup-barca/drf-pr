@@ -1,13 +1,10 @@
 from django.urls import path
 
-from users.apps import UsersConfig
-from users.views import (PaymentCreateAPIView, PaymentsListAPIView,
-                         UserCreateApiView)
+from users.views import CustomUserDetail, PaymentListAPIView
 
-app_name = UsersConfig.name
+app_name = 'users'
 
 urlpatterns = [
-    path("register/", UserCreateApiView.as_view(), name="register"),
-    path("payments/", PaymentsListAPIView.as_view(), name="payments_list"),
-    path("payment/", PaymentCreateAPIView.as_view(), name="payment"),
-]
+    path('user/detail/<int:pk>/', CustomUserDetail.as_view(), name='user_detail'),
+    path('payments/list/', PaymentListAPIView.as_view(), name='payment_list'),
+    ]
