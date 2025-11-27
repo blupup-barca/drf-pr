@@ -10,7 +10,7 @@ from rest_framework.generics import (
     DestroyAPIView,
 )
 from users.models import Payments, CustomUser
-from users.permissions import OwnerOnlyPerm
+from users.permissions import IsOwner
 from users.serializers import PaymentsSerializer, CustomUserSerializer
 
 
@@ -26,7 +26,7 @@ class UpdateCustomUser(UpdateAPIView):
 
     permission_classes = [
         IsAuthenticated,
-        OwnerOnlyPerm,
+        IsOwner,
     ]
     serializer_class = CustomUserSerializer
 
@@ -36,7 +36,7 @@ class CustomUserDetail(RetrieveAPIView):
 
     permission_classes = [
         IsAuthenticated,
-        OwnerOnlyPerm,
+        IsOwner,
     ]
     queryset = CustomUser.objects.all()
     serializer_class = CustomUserSerializer
@@ -47,7 +47,7 @@ class DeleteCustomUser(DestroyAPIView):
 
     permission_classes = [
         IsAuthenticated,
-        OwnerOnlyPerm,
+        IsOwner,
     ]
     serializer_class = CustomUserSerializer
 
@@ -67,7 +67,7 @@ class PaymentCreateAPIView(CreateAPIView):
 class PaymentListAPIView(ListAPIView):
     """Список платежей."""
 
-    permission_classes = [IsAuthenticated, OwnerOnlyPerm]
+    permission_classes = [IsAuthenticated, IsOwner]
     queryset = Payments.objects.all()
     serializer_class = PaymentsSerializer
 
@@ -80,7 +80,7 @@ class PaymentListAPIView(ListAPIView):
 class PaymentUpdateAPIView(UpdateAPIView):
     """Обновление платежа."""
 
-    permission_classes = [IsAuthenticated, OwnerOnlyPerm]
+    permission_classes = [IsAuthenticated, IsOwner]
     queryset = Payments.objects.all()
     serializer_class = PaymentsSerializer
 
@@ -88,5 +88,5 @@ class PaymentUpdateAPIView(UpdateAPIView):
 class PaymentDeleteAPIView(DestroyAPIView):
     """Удаление платежа."""
 
-    permission_classes = [IsAuthenticated, OwnerOnlyPerm]
+    permission_classes = [IsAuthenticated, IsOwner]
     queryset = Payments.objects.all()

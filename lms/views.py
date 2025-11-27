@@ -1,6 +1,5 @@
 from rest_framework.filters import OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import permissions
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.generics import (
     CreateAPIView,
@@ -12,11 +11,9 @@ from rest_framework.generics import (
 
 from lms.models import Course, Lesson
 from lms.serializers import CourseSerializer, LessonSerializer
-
-from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 
-from users.permissions import OwnerOrManagerPerm, OwnerOnlyPerm
+from users.permissions import IsModer, IsOwner
 
 
 # region CRUD для курса
@@ -50,14 +47,14 @@ class CourseUpdateAPIView(UpdateAPIView):
 
     serializer_class = CourseSerializer
     queryset = Course.objects.all()
-    permission_classes = [OwnerOrManagerPerm]
+    permission_classes = [IsModer]
 
 
 class CourseDeleteAPIView(DestroyAPIView):
     """Удаление курса."""
 
     serializer_class = CourseSerializer
-    permission_classes = [OwnerOnlyPerm]
+    permission_classes = [IsOwner]
 
 
 # endregion
@@ -103,11 +100,11 @@ class LessonUpdateAPIView(UpdateAPIView):
 
     serializer_class = LessonSerializer
     queryset = Lesson.objects.all()
-    permission_classes = [OwnerOrManagerPerm]
+    permission_classes = [IsModer]
 
 
 class LessonDeleteAPIView(DestroyAPIView):
     """Удаление урока."""
 
     queryset = Lesson.objects.all()
-    permission_classes = [OwnerOnlyPerm]
+    permission_classes = [IsOwner]

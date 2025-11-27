@@ -2,7 +2,6 @@ from rest_framework import serializers
 from lms.models import Course, Lesson
 
 
-
 class LessonSerializer(serializers.ModelSerializer):
     """Сериализатор для урока."""
 
