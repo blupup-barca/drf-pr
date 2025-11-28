@@ -13,6 +13,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 
+ALLOWED_URLS = ['youtube.com', ]  # допустимые URL для ссылок модели lesson поле video
 
 DEBUG = True
 

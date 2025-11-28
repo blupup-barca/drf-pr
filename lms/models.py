@@ -1,7 +1,7 @@
 from django.db import models
-from django.db.models import RESTRICT, SET_NULL
+from django.db.models import RESTRICT, SET_NULL, CASCADE
 
-
+from config.settings import AUTH_USER_MODEL
 class Course(models.Model):
     """Курс"""
 
@@ -56,3 +56,22 @@ class Lesson(models.Model):
         verbose_name = "Урок"
         verbose_name_plural = "Уроки"
         ordering = ["name"]
+
+class Subscribe(models.Model):
+    """ Подписка. """
+
+    user = models.ForeignKey(AUTH_USER_MODEL, on_delete=CASCADE, verbose_name='Пользователь')
+    course = models.ForeignKey(Course, on_delete=CASCADE, verbose_name='Курс')
+    status_sub = models.BooleanField(default=True, verbose_name='Статус подписки')
+    description = models.TextField(max_length=150, blank=True, null=True, verbose_name='Описание')
+    created_at = models.DateTimeField(auto_now=True, verbose_name='Добавлена')
+    updated_at = models.DateTimeField(auto_now_add=True, verbose_name='Изменена')
+
+    def __str__(self):
+        return f'{self.user} {self.course}'
+
+    class Meta:
+        verbose_name = 'Подписка'
+        verbose_name_plural = 'Подписки'
+        unique_together = ['user', 'course']
+        ordering = ['user']

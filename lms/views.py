@@ -1,4 +1,7 @@
+from django.shortcuts import get_object_or_404
 from rest_framework.filters import OrderingFilter
+from rest_framework.views import APIView
+from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.generics import (
@@ -9,7 +12,7 @@ from rest_framework.generics import (
     DestroyAPIView,
 )
 
-from lms.models import Course, Lesson
+from lms.models import Course, Lesson, Subscribe
 from lms.serializers import CourseSerializer, LessonSerializer
 from rest_framework.permissions import IsAuthenticated
 
@@ -108,3 +111,22 @@ class LessonDeleteAPIView(DestroyAPIView):
 
     queryset = Lesson.objects.all()
     permission_classes = [IsOwner]
+
+class SubscribeView(APIView):
+    """  Добавление и удаление подписки пользователя. """
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        course_id = request.data.get("course_id")
+        course = get_object_or_404(Course, id=course_id)
+
+        subscribe = Subscribe.objects.filter(user=user, course=course)
+
+        if subscribe.exists():
+            subscribe.delete()
+            return Response(status=204)
+        else:
+            Subscribe.objects.create(user=user, course=course)
+            return Response(status=201)
