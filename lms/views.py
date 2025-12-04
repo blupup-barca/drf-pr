@@ -14,6 +14,7 @@ from rest_framework.generics import (
 
 from lms.models import Course, Lesson, Subscribe
 from lms.serializers import CourseSerializer, LessonSerializer
+from lms.paginators import CustomPagination
 from rest_framework.permissions import IsAuthenticated
 
 from users.permissions import IsModer, IsOwner
@@ -43,6 +44,17 @@ class CourseViewSet(ModelViewSet):
     queryset = Course.objects.all()
     filter_backends = [DjangoFilterBackend]
     permission_classes = [IsAuthenticated]
+
+    pagination_class = CustomPagination
+
+    def get_permissions(self):
+        if self.action == "create":
+            self.permission_classes = (~IsModer,)
+        elif self.action in ["update", "retrieve"]:
+            self.permission_classes = (IsModer | IsOwner,)
+        elif self.action == "destroy":
+            self.permission_classes = (~IsModer | IsOwner,)
+        return super().get_permissions()
 
 
 class CourseUpdateAPIView(UpdateAPIView):
@@ -88,6 +100,7 @@ class LessonListAPIView(ListAPIView):
     ordering_fields = ["name"]
     ordering = ["-name"]
     permission_classes = [IsAuthenticated]
+    pagination_class = CustomPagination
 
 
 class LessonRetrieveAPIView(RetrieveAPIView):
@@ -112,8 +125,9 @@ class LessonDeleteAPIView(DestroyAPIView):
     queryset = Lesson.objects.all()
     permission_classes = [IsOwner]
 
+
 class SubscribeView(APIView):
-    """  Добавление и удаление подписки пользователя. """
+    """Добавление и удаление подписки пользователя."""
 
     permission_classes = [IsAuthenticated]
 
