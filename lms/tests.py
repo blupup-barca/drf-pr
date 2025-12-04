@@ -1,108 +1,81 @@
-from rest_framework.test import APITestCase
-from rest_framework import status
-
 from lms.models import Course, Lesson
 from users.models import CustomUser
+from rest_framework.test import APITestCase
+from django.urls import reverse
+from rest_framework import status
 
 
-class TestCourseLesson(APITestCase):
-    """ Тест курса и урока. """
+class LessonsTestCase(APITestCase):
 
-    def setUp(self) -> None:
-        """ Создание тестового пользователя для авторизации. """
-
-        self.user = CustomUser.objects.create_user(
-            email='test@test.com',
-            username='TesTUser',
-            password='password123')
-
+    def setUp(self):
+        self.user = CustomUser.objects.create(email="admin@sky.pro")
         self.course = Course.objects.create(
-            name='Test_Course_1',
-            description='Test_Course_1',
-            owner=self.user)
-
+            title="Прыжки",
+            description="В курсе представлены маленькие и большие прыжки",
+        )
         self.lesson = Lesson.objects.create(
-            name='Test_Lesson_3',
-            description='Test_Lesson_3',
+            title="Saute",
+            description="Маленькие прыжки",
             owner=self.user,
             course=self.course,
         )
-
         self.client.force_authenticate(user=self.user)
 
-    def test_create_course(self):
-        """ Тест создание курса. """
+    def test_lesson_retrieve(self):
+        url = reverse("lms:lessons_retrieve", args=(self.lesson.pk,))
+        response = self.client.get(url)
+        data = response.json()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(data.get("title"), self.lesson.title)
 
+    def test_lesson_create(self):
+        url = reverse("lms:lessons_create")
         data = {
-            'name': 'Test_course_2',
-            'description': 'Test_course_2',
-            'owner': self.user.id,
+            "title": "Общая физическая подготовка",
+            "description": "Урок содержит упражнения для развития физической формы ученика",
+            "course": self.course.pk,
+            "video_url": "http://youtube.com/",
         }
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Lesson.objects.all().count(), 2)
 
-        response = self.client.post('/course/', data=data)
-
-        self.assertEqual(
-            response.status_code,
-            status.HTTP_201_CREATED
-        )
-
-        self.assertEqual(response.json(),
-                         {'name': 'Test_course_2',
-                          'description': 'Test_course_2',
-                          'preview': None,
-                          'lesson_count': 0,
-                          'lesson': []})
-
-        self.assertTrue(
-            Course.objects.all().exists()
-        )
-
-    def test_create_lesson(self):
-        """ Тест создание урока. """
-
+    def test_lesson_update(self):
+        url = reverse("lms:lessons_update", args=(self.lesson.pk,))
         data = {
-            'name': 'Test_lesson',
-            'description': 'Test_lesson',
-            'owner': self.user.id,
-            'course': self.course.id,
+            "title": "Прыжки. От простого к сложному",
+            "description": "В курсе представлены маленькие и большие прыжки",
+            "course": self.course.pk,
+            "link_to_video": "http://youtube.com/",
         }
+        response = self.client.patch(url, data)
+        data = response.json()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(data.get("title"), "Прыжки. От простого к сложному")
 
-        response = self.client.post('/lesson/create/', data=data)
+    def test_lesson_delete(self):
+        url = reverse("lms:lessons_delete", args=(self.lesson.pk,))
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(Lesson.objects.all().count(), 0)
 
-        self.assertEqual(
-            response.status_code,
-            status.HTTP_201_CREATED
-        )
-
-        self.assertTrue(self.course.lesson_set.filter(name='Test_lesson').exists())
-
-        self.assertEqual(response.json(),
-                         {'name': 'Test_lesson',
-                          'description': 'Test_lesson',
-                          'video': None, 'course': 3})
-
-    def test_update_lesson(self):
-        """ Тест обновление урока. """
-
-        data = {
-            'name': 'Test_lesson_update',
-            'description': 'Test_lesson_update',
-            'owner': self.user.id,
-            'course': self.course.id,
+    def test_lesson_list(self):
+        url = reverse("lms:lessons_list")
+        response = self.client.get(url)
+        data = response.json()
+        result = {
+            "count": 1,
+            "next": None,
+            "previous": None,
+            "results": [
+                {
+                    "id": self.lesson.pk,
+                    "title": self.lesson.title,
+                    "course": self.course.pk,
+                    "owner": self.user.pk,
+                    "video_url": self.lesson.video_url,
+                }
+            ],
         }
-
-        self.client.patch(f'/lesson/update/{self.lesson.id}', data=data)
-
-        self.assertTrue(
-            Lesson.objects.all().count(),0
-        )
-
-    def test_delete_lesson(self):
-        """ Тест удаления урока. """
-
-        response = self.client.delete(f'/lesson/delete/{self.lesson.id}')
-
-        self.assertEqual(
-            response.status_code,
-            status.HTTP_301_MOVED_PERMANENTLY
-        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(data, result)
