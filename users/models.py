@@ -1,68 +1,80 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.db.models import DO_NOTHING, CASCADE
 
-from lms.models import Course, Lessons
+from lms.models import Course, Lesson
 
 
-class User(AbstractUser):
-    username = None
-    email = models.EmailField(unique=True, verbose_name="email")
-    phone_number = models.CharField(
-        max_length=15, null=True, blank=True, verbose_name="номер телефона"
-    )
+class CustomUser(AbstractUser):
+    """Пользователь."""
+
+    email = models.EmailField(unique=True, verbose_name="Ваш Email")
+    phone_number = models.CharField(null=True, blank=True, verbose_name="Телефон")
     avatar = models.ImageField(
-        upload_to="avatars/", blank=True, null=True, verbose_name="фото"
+        upload_to="images/", null=True, blank=True, verbose_name="Аватар"
     )
-    country = models.CharField(max_length=50, blank=True, verbose_name="страна")
+    created_at = models.DateTimeField(auto_now=True, verbose_name="Добавлен")
+    updated_at = models.DateTimeField(auto_now_add=True, verbose_name="Изменён")
 
     USERNAME_FIELD = "email"
-    REQUIRED_FIELDS = []
+    REQUIRED_FIELDS = [
+        "username",
+    ]
+
+    def __str__(self):
+        return f"{self.email}"
+
+    class Meta:
+        verbose_name = "Пользователь"
+        verbose_name_plural = "Пользователи"
+        ordering = ["email"]
 
 
 class Payments(models.Model):
-    METHOD_CHOICES = [
-        ("Наличные", "Наличные"),
-        ("Перевод", "Перевод"),
+    """Платежи."""
+
+    pay_met_list = [
+        ("cache", "наличные"),
+        ("transfer", "перевод"),
+        ("bonuses", "бонусы и акции"),
     ]
 
+    name = models.CharField(unique=True, max_length=150, verbose_name="номер платежа")
     user = models.ForeignKey(
-        User,
-        verbose_name="платежи",
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
+        CustomUser,
+        on_delete=CASCADE,
+        verbose_name="оплатил",
     )
-    date = models.DateField(auto_now=True, verbose_name="дата платежа")
     course = models.ForeignKey(
         Course,
-        related_name="paid_course",
-        verbose_name="оплаченный курс",
-        on_delete=models.CASCADE,
-        blank=True,
+        on_delete=DO_NOTHING,
+        verbose_name="курс",
+    )
+    lesson = models.ForeignKey(
+        Lesson,
+        on_delete=DO_NOTHING,
+        verbose_name="урок",
+    )
+    payment_day = models.DateTimeField(
+        null=True, blank=True, verbose_name="дата платежа"
+    )
+    amount = models.DecimalField(
+        default=0.0, decimal_places=2, max_digits=8, verbose_name="сумма"
+    )
+    payment_method = models.CharField(
+        choices=pay_met_list,
+        default="transfer",
         null=True,
-    )
-    lessons = models.ForeignKey(
-        Lessons,
-        related_name="paid_lesson",
-        verbose_name="оплаченный урок",
-        on_delete=models.CASCADE,
         blank=True,
-        null=True,
+        verbose_name="способ оплаты",
     )
-    payment_amount = models.IntegerField(verbose_name="сумма платежа")
-    payment_method = models.CharField(max_length=20, choices=METHOD_CHOICES)
-    session_id_course = models.CharField(
-        max_length=250, null=True, blank=True, verbose_name="id сессии"
-    )
-    link_course = models.URLField(
-        max_length=400, null=True, blank=True, verbose_name="ссылка на оплату"
-    )
-    session_id_lesson = models.CharField(
-        max_length=250, null=True, blank=True, verbose_name="id сессии"
-    )
-    link_lesson = models.URLField(
-        max_length=400, null=True, blank=True, verbose_name="ссылка на оплату"
-    )
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="создан")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="изменён")
 
     def __str__(self):
-        return f"{self.user.email} — {self.payment_amount} ₽ — {self.date}"
+        return f"{self.name}"
+
+    class Meta:
+        verbose_name = "Платёж"
+        verbose_name_plural = "Платежи"
+        ordering = ["payment_day"]

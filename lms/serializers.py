@@ -1,24 +1,34 @@
-from rest_framework.serializers import ModelSerializer, SerializerMethodField
+from rest_framework import serializers
+from lms.models import Course, Lesson
+from .validators import validate_links
 
-from lms.models import Course, Lessons
+class LessonSerializer(serializers.ModelSerializer):
+    """Сериализатор для урока."""
+    video_url = serializers.CharField(validators=[validate_links])
 
-
-class LessonsSerializer(ModelSerializer):
     class Meta:
-        model = Lessons
-        fields = "__all__"
+        model = Lesson
+        fields = [
+            "name",
+            "description",
+            "video",
+            "course",
+        ]
 
 
-class CourseSerializer(ModelSerializer):
-    number_of_lessons = SerializerMethodField()
-    lessons = LessonsSerializer(many=True, read_only=True)
+class CourseSerializer(serializers.ModelSerializer):
+    """Сериализатор для курса."""
 
+    lesson_count = serializers.SerializerMethodField()
+    lesson = LessonSerializer(many=True, read_only=True, source="lesson_set")
 
-@staticmethod
-def get_number_of_lessons(instance):
-    return instance.lessons.count()
+    class Meta:
+        model = Course
+        fields = [
+            "name",
+            "description",
+            "preview",
+        ]
 
-
-class Meta:
-    model = Course
-    fields = "__all__"
+    def get_lesson_count(self, instance):
+        return instance.lesson_set.count()
