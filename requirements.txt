@@ -5,4 +5,9 @@ python-dotenv==1.1.1
 pillow==12.0.0
 django-filter==25.3
 rest_framework_simplejwt==25.3
+drf-yasg==25.3
+stripe==25.3
+
+
+
 

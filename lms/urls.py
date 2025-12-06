@@ -9,6 +9,7 @@ from lms.views import (
     LessonUpdateAPIView,
     LessonDeleteAPIView,
     SubscribeView,
+    ProductPriceCreateAPIView,
 )
 
 app_name = "lms"
@@ -27,4 +28,5 @@ urlpatterns = [
         "lesson/delete/<int:pk>/", LessonDeleteAPIView.as_view(), name="lesson_delete"
     ),
     path("subscribe/", SubscribeView.as_view(), name="subscribe"),
+    path('product_create/', ProductPriceCreateAPIView.as_view(), name='product_create'),
 ] + router.urls
