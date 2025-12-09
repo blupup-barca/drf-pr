@@ -12,7 +12,7 @@ from rest_framework.generics import (
 from users.models import Payments, CustomUser
 from users.permissions import IsOwner
 from users.serializers import PaymentsSerializer, CustomUserSerializer
-from users.services import create_stripe_price_amount, create_stripe_session
+
 # region CRUD user
 class CreateCustomUser(CreateAPIView):
     """Создание пользователя."""
