@@ -12,7 +12,7 @@ from rest_framework.generics import (
 from users.models import Payments, CustomUser
 from users.permissions import IsOwner
 from users.serializers import PaymentsSerializer, CustomUserSerializer
-
+from users.services import create_stripe_price_amount, create_stripe_session
 # region CRUD user
 class CreateCustomUser(CreateAPIView):
     """Создание пользователя."""
@@ -91,23 +91,17 @@ class PaymentDeleteAPIView(DestroyAPIView):
     queryset = Payments.objects.all()
 
 
-class PaymentCreateAPIView(CreateAPIView):
-    serializer_class = PaymentSerializer
-    queryset = Payment.objects.all()
+class ProductPriceCreateAPIView(CreateAPIView):
+    """ Создание цены продукта."""
+
+    serializer_class = PaymentsSerializer
+    queryset = CustomUser.objects.all()
+    permission_classes = [AllowAny]
 
     def perform_create(self, serializer):
-        payment = serializer.save(owner=self.request.user)
-        if payment.paid_course:
-            product_name = f"{payment.paid_course.title} Course"
-        else:
-            product_name = "General Course"
-        product = create_stripe_product(product_name)
-        price = create_stripe_price(payment.amount, product)
-
-        # Создание сессии для оплаты
-        session_id, payment_link = create_stripe_checkout_sessions(price)
-
-        # Сохранение данных в модель Payments
-        payment.stripe_session_id = session_id
-        payment.link = payment_link
-        payment.save()
+        pay = serializer.save(user=self.request.user)
+        price = create_stripe_price_amount(pay.product_name, pay.amount)
+        session_id, session_link = create_stripe_session(price)
+        pay.session_id = session_id
+        pay.link = session_link
+        pay.save()
