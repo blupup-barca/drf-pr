@@ -91,17 +91,3 @@ class PaymentDeleteAPIView(DestroyAPIView):
     queryset = Payments.objects.all()
 
 
-class ProductPriceCreateAPIView(CreateAPIView):
-    """ Создание цены продукта."""
-
-    serializer_class = PaymentsSerializer
-    queryset = CustomUser.objects.all()
-    permission_classes = [AllowAny]
-
-    def perform_create(self, serializer):
-        pay = serializer.save(user=self.request.user)
-        price = create_stripe_price_amount(pay.product_name, pay.amount)
-        session_id, session_link = create_stripe_session(price)
-        pay.session_id = session_id
-        pay.link = session_link
-        pay.save()

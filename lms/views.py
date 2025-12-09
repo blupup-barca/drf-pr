@@ -15,10 +15,11 @@ from rest_framework.generics import (
 from lms.models import Course, Lesson, Subscribe
 from lms.serializers import CourseSerializer, LessonSerializer
 from lms.paginators import CustomPagination
-from rest_framework.permissions import IsAuthenticated
-
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from users.models import CustomUser
 from users.permissions import IsModer, IsOwner
-
+from users.serializers import PaymentsSerializer
+from users.services import create_stripe_price_amount, create_stripe_session
 
 
 class CourseCreateAPIView(CreateAPIView):
@@ -143,3 +144,17 @@ class SubscribeView(APIView):
             Subscribe.objects.create(user=user, course=course)
             return Response(status=201)
 
+class ProductPriceCreateAPIView(CreateAPIView):
+    """ Создание цены продукта."""
+
+    serializer_class = PaymentsSerializer
+    queryset = CustomUser.objects.all()
+    permission_classes = [AllowAny]
+
+    def perform_create(self, serializer):
+        pay = serializer.save(user=self.request.user)
+        price = create_stripe_price_amount(pay.product_name, pay.amount)
+        session_id, session_link = create_stripe_session(price)
+        pay.session_id = session_id
+        pay.link = session_link
+        pay.save()
