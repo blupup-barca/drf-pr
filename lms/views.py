@@ -144,8 +144,9 @@ class SubscribeView(APIView):
             Subscribe.objects.create(user=user, course=course)
             return Response(status=201)
 
+
 class ProductPriceCreateAPIView(CreateAPIView):
-    """ Создание цены продукта."""
+    """Создание цены продукта."""
 
     serializer_class = PaymentsSerializer
     queryset = CustomUser.objects.all()

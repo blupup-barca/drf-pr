@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
     "drf_yasg",
     "corsheaders",
+    "django_celery_beat",
 ]
 
 MIDDLEWARE = [
@@ -48,7 +49,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "corsheaders.middleware.CorsMiddleware"
+    "corsheaders.middleware.CorsMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -125,7 +126,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = "UTC"
+TIME_ZONE = 'Europe/Moscow'
 
 USE_I18N = True
 
@@ -154,6 +155,27 @@ CSRF_TRUSTED_ORIGINS = [
     "https://read-and-write.example.com",
 ]
 
-STRIPE_API_KEY = (os.getenv('API_KEY_STRIPE'))
+STRIPE_API_KEY = os.getenv("API_KEY_STRIPE")
 
 SUCCESS_URL_SESSION = '"http://127.0.0.1:8000/"'
+
+CELERY_BROKER_URL = "redis://localhost:6379"
+CELERY_RESULT_BACKEND = "redis://localhost:6379"
+CELERY_TIMEZONE = "Europe/Moscow"
+CELERY_TASK_TIME_LIMIT = 30 * 60
+CELERY_TASK_TRACK_STARTED = True
+
+CELERY_BEAT_SCHEDULE = {
+    "task-name": {
+        "task": "materials.tasks.block_user",  # Путь к задаче
+        "schedule": timedelta(days=1),  # Расписание выполнения задачи
+    },
+}
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = os.getenv("EMAIL_HOST")
+EMAIL_PORT = os.getenv("EMAIL_PORT")
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
+EMAIL_USE_TLS = False
+EMAIL_USE_SSL = True

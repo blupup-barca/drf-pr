@@ -7,6 +7,9 @@ django-filter==25.3
 rest_framework_simplejwt==25.3
 drf-yasg==25.3
 stripe==25.3
+celery==2.5.3
+django-celery-beat==25.3
+
 
 
 

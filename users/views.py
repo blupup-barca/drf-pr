@@ -13,6 +13,7 @@ from users.models import Payments, CustomUser
 from users.permissions import IsOwner
 from users.serializers import PaymentsSerializer, CustomUserSerializer
 
+
 # region CRUD user
 class CreateCustomUser(CreateAPIView):
     """Создание пользователя."""
@@ -89,5 +90,3 @@ class PaymentDeleteAPIView(DestroyAPIView):
 
     permission_classes = [IsAuthenticated, IsOwner]
     queryset = Payments.objects.all()
-
-
