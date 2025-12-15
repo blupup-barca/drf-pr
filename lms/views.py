@@ -20,7 +20,7 @@ from users.models import CustomUser
 from users.permissions import IsModer, IsOwner
 from users.serializers import PaymentsSerializer
 from users.services import create_stripe_price_amount, create_stripe_session
-
+from lms.tasks import subscription_message
 
 class CourseCreateAPIView(CreateAPIView):
     """Создание курса."""
@@ -62,6 +62,10 @@ class CourseUpdateAPIView(UpdateAPIView):
     serializer_class = CourseSerializer
     queryset = Course.objects.all()
     permission_classes = [IsModer]
+
+    def perform_update(self, serializer):
+        course = serializer.save()
+        subscription_message.delay(course.pk)
 
 
 class CourseDeleteAPIView(DestroyAPIView):

@@ -164,10 +164,10 @@ CELERY_RESULT_BACKEND = "redis://localhost:6379"
 CELERY_TIMEZONE = "Europe/Moscow"
 CELERY_TASK_TIME_LIMIT = 30 * 60
 CELERY_TASK_TRACK_STARTED = True
-
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 CELERY_BEAT_SCHEDULE = {
-    "task-name": {
-        "task": "materials.tasks.block_user",  # Путь к задаче
+    "block_user": {
+        "task": "users.tasks.block_user",  # Путь к задаче
         "schedule": timedelta(days=1),  # Расписание выполнения задачи
     },
 }

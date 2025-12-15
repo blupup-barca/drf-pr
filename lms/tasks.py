@@ -1,43 +1,38 @@
 from celery import shared_task
 from django.core.mail import send_mail
-from datetime import timedelta
-from django.utils import timezone
+from django.conf import settings
+import smtplib
+import logging
 
-from config.settings import EMAIL_HOST
-from lms.models import Subscribe
-from lms.models import Course
-from users.models import CustomUser
+logger = logging.getLogger(__name__)
 
 
-@shared_task
-def send_mail_course_update(course_id):
-    """ Рассылка уведомлений об обновлении. """
+@shared_task(bind=True, max_retries=3)
+def subscription_message(self, course, email):
+    try:
+        send_mail(
+            subject="Сообщение о подписке",
+            message=f"Материалы курса {course} обновились",
+            from_email=settings.EMAIL_HOST_USER,
+            recipient_list=[email],
+            fail_silently=False
+        )
+        logger.info(f"Письмо для {email} успешно отправлено")
 
-    course: Course = Course.objects.get(id=course_id)
-    subscribers = Subscribe.objects.filter(course=course).select_related('user')
+    except smtplib.SMTPAuthenticationError as e:
+        error_msg = f"Ошибка аутентификации SMTP: {str(e)}"
+        logger.error(error_msg)
+        print(f"❌ {error_msg}")
+        raise self.retry(exc=e, countdown=60)  # Повтор через 60 секунд
 
-    recipients = []
+    except smtplib.SMTPException as e:
+        error_msg = f"Ошибка SMTP при отправке на {email}: {str(e)}"
+        logger.error(error_msg)
+        print(f"⚠️ {error_msg}")
+        raise self.retry(exc=e, countdown=120)
 
-    for sub in subscribers:
-        if sub.user.email:
-            recipients.append(sub.user.email)
-
-    if not recipients:
-        return
-
-    send_mail(
-        subject=f"Курс '{course.name}' обновлён!",
-        message=f"Мы обновили курс '{course.name}' ! Ждём Вас на нашей платформе!",
-        from_email=EMAIL_HOST,
-        recipient_list=recipients,
-        fail_silently=False,
-    )
-
-
-@shared_task
-def check_active_status_user():
-    """ Проверка активности пользователя. """
-
-    time_zone = timezone.now() - timedelta(days=30)
-    users_to_deactivate = CustomUser.objects.filter(last_login__lt=time_zone, is_active=True)
-    users_to_deactivate.update(is_active=False)
+    except Exception as e:
+        error_msg = f"Неожиданная ошибка для {email}: {str(e)}"
+        logger.exception(error_msg)  # Логирует traceback
+        print(f"🔥 {error_msg}")
+        raise self.retry(exc=e, countdown=300)
