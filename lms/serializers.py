@@ -1,24 +1,47 @@
-from rest_framework.serializers import ModelSerializer, SerializerMethodField
+from rest_framework import serializers
+from lms.models import Course, Lesson, Subscribe
+from .validators import validate_links
 
-from lms.models import Course, Lessons
 
+class LessonSerializer(serializers.ModelSerializer):
+    """Сериализатор для урока."""
 
-class LessonsSerializer(ModelSerializer):
+    video_url = serializers.CharField(validators=[validate_links])
+
     class Meta:
-        model = Lessons
-        fields = "__all__"
+        model = Lesson
+        fields = [
+            "name",
+            "description",
+            "video_url",
+            "course",
+        ]
 
 
-class CourseSerializer(ModelSerializer):
-    number_of_lessons = SerializerMethodField()
-    lessons = LessonsSerializer(many=True, read_only=True)
+class CourseSerializer(serializers.ModelSerializer):
+    count_of_lessons = serializers.SerializerMethodField()
+    info_lessons = serializers.SerializerMethodField()
+    is_subscribed = serializers.SerializerMethodField()
 
+    def get_count_of_lessons(self, obj):
+        return obj.lesson_set.count()
 
-@staticmethod
-def get_number_of_lessons(instance):
-    return instance.lessons.count()
+    def get_info_lessons(self, obj):
+        lessons = obj.lesson_set.all()
+        return LessonSerializer(lessons, many=True).data
 
+    def get_is_subscribed(self, obj):
+        user = self.context.get("request").user
+        if not user.is_authenticated:
+            return False
+        return Subscribe.objects.filter(user=user, course=obj).exists()
 
-class Meta:
-    model = Course
-    fields = "__all__"
+    class Meta:
+        model = Course
+        fields = (
+            "description",
+            "preview",
+            "count_of_lessons",
+            "info_lessons",
+            "is_subscribed",
+        )
