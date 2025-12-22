@@ -37,7 +37,7 @@ class TestCourseLesson(APITestCase):
             "owner": self.user.pk,
         }
 
-        response = self.client.post("/course/", data=data)
+        response = self.client.post("/api/course/", data=data)
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
@@ -56,7 +56,7 @@ class TestCourseLesson(APITestCase):
             "course": self.course.pk,
         }
 
-        response = self.client.post("/lessons/", data=data)
+        response = self.client.post("/lessons/create/", data=data)
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
@@ -78,7 +78,7 @@ class TestCourseLesson(APITestCase):
             "course": self.course.id,
         }
 
-        response = self.client.patch(f"/lessons/{self.lesson.id}/", data=updated_data)
+        response = self.client.patch(f"/lessons/update/{self.lesson.id}/", data=updated_data)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -90,7 +90,7 @@ class TestCourseLesson(APITestCase):
         self.assertEqual(updated_lesson.course, self.course)
 
     def test_delete_lesson(self):
-        response = self.client.delete(f"/lessons/{self.lesson.id}/")
+        response = self.client.delete(f"/lessons/delete/{self.lesson.id}/")
 
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
