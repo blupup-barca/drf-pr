@@ -10,7 +10,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
-        python-version: 3.x
+        python-version: 3.12
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
@@ -44,12 +44,10 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: '3.12'
-      - name: Install Poetry
-        run: pip install poetry
       - name: Install dependencies
         run: |
-          poetry lock
-          poetry install --no-root
+            python -m pip install --upgrade pip
+            pip install -r requirements.txt
       - name: Set up SECRET_KEY
         run: echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" >> $GITHUB_ENV
       - name: Makemigrations
