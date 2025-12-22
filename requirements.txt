@@ -8,3 +8,4 @@ drf_yasg==1.21.11
 django-cors-headers==4.9.0
 python-dotenv==1.2.1
 flake8==7.3.0
+psycopg2-binary==2.9.11
