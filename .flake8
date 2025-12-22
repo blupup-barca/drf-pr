@@ -7,6 +7,8 @@ exclude =
     */site-packages/*,
     venv,
     .venv,
+    env,
+    .env,
 
 ignore =
     E501,W292,F401,E302,F541
