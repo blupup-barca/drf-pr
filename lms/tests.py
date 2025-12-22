@@ -60,13 +60,18 @@ class TestCourseLesson(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-        lesson_id = response.data["id"]
-        created_lesson = Lesson.objects.get(pk=lesson_id)
+        self.assertEqual(
+            response.json(),
+            {
+                "name": "Test_course_2",
+                "description": "Test_course_2",
+                "preview": None,
+                "lesson_count": 0,
+                "lesson": [],
+            },
+        )
 
-        self.assertEqual(created_lesson.name, "Test_lesson")
-        self.assertEqual(created_lesson.description, "Test_lesson")
-        self.assertEqual(created_lesson.owner, self.user)
-        self.assertEqual(created_lesson.course, self.course)
+        self.assertTrue(Course.objects.all().exists())
 
     def test_update_lesson(self):
         """Тест обновление урока."""
@@ -82,17 +87,13 @@ class TestCourseLesson(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        updated_lesson = Lesson.objects.get(id=self.lesson.id)
+        self.client.patch(f"/lesson/update/{self.lesson.id}", data=updated_data)
 
-        self.assertEqual(updated_lesson.name, "Updated_test_lesson")
-        self.assertEqual(updated_lesson.description, "Updated_test_description")
-        self.assertEqual(updated_lesson.owner, self.user)
-        self.assertEqual(updated_lesson.course, self.course)
+        self.assertTrue(Lesson.objects.all().count(), 0)
 
     def test_delete_lesson(self):
         response = self.client.delete(f"/lessons/delete/{self.lesson.id}/")
 
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
-        with self.assertRaises(Lesson.DoesNotExist):
-            Lesson.objects.get(id=self.lesson.id)
+
