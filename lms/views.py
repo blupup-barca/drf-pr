@@ -119,7 +119,7 @@ class LessonUpdateAPIView(UpdateAPIView):
 
     serializer_class = LessonSerializer
     queryset = Lesson.objects.all()
-    permission_classes =  [ IsModer | IsOwner]
+    permission_classes = [IsModer | IsOwner]
     filter_backends = [DjangoFilterBackend]
 
 
