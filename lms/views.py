@@ -1,5 +1,5 @@
 from django.shortcuts import get_object_or_404
-from rest_framework.filters import OrderingFilter
+from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
@@ -119,7 +119,8 @@ class LessonUpdateAPIView(UpdateAPIView):
 
     serializer_class = LessonSerializer
     queryset = Lesson.objects.all()
-    permission_classes = [IsModer]
+    permission_classes =  [ IsModer | IsOwner]
+    filter_backends = [DjangoFilterBackend]
 
 
 class LessonDeleteAPIView(DestroyAPIView):
@@ -127,6 +128,7 @@ class LessonDeleteAPIView(DestroyAPIView):
 
     queryset = Lesson.objects.all()
     permission_classes = [IsOwner]
+    filter_backends = [SearchFilter, OrderingFilter]
 
 
 class SubscribeView(APIView):

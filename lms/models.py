@@ -46,7 +46,7 @@ class Lesson(models.Model):
     preview = models.ImageField(
         upload_to="images/", null=True, blank=True, verbose_name="Изображение"
     )
-    video = models.URLField(null=True, blank=True, verbose_name="Ссылка на видео")
+    video_url = models.URLField(null=True, blank=True, verbose_name="Ссылка на видео")
     course = models.ForeignKey(Course, on_delete=RESTRICT, verbose_name="Курс")
     created_at = models.DateTimeField(auto_now=True, verbose_name="Добавлен")
     updated_at = models.DateTimeField(auto_now_add=True, verbose_name="Изменён")
