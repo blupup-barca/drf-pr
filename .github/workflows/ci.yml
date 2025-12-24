@@ -86,7 +86,7 @@ jobs:
             sudo docker stop myapp || true
             sudo docker rm myapp || true
             sudo docker run -d \
-              --name drf-project \
+              --name myapp \
               -p 80:8080 \
               -e HOST=localhost \
               ${{ secrets.DOCKER_HUB_USERNAME }}/myapp:${{ github.sha }}
