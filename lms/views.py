@@ -1,37 +1,167 @@
-from rest_framework import viewsets
-from rest_framework.generics import (CreateAPIView, DestroyAPIView,
-                                     ListAPIView, RetrieveAPIView,
-                                     UpdateAPIView)
+from django.shortcuts import get_object_or_404
+from rest_framework.filters import OrderingFilter, SearchFilter
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.viewsets import ModelViewSet
+from rest_framework.generics import (
+    CreateAPIView,
+    ListAPIView,
+    RetrieveAPIView,
+    UpdateAPIView,
+    DestroyAPIView,
+)
 
-from .models import Course, Lessons
-from .serializers import CourseSerializer, LessonsSerializer
+from lms.models import Course, Lesson, Subscribe
+from lms.serializers import CourseSerializer, LessonSerializer
+from lms.paginators import CustomPagination
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from users.models import CustomUser
+from users.permissions import IsModer, IsOwner
+from users.serializers import PaymentsSerializer
+from users.services import create_stripe_price_amount, create_stripe_session
+from lms.tasks import subscription_message
 
+class CourseCreateAPIView(CreateAPIView):
+    """Создание курса."""
 
-class CourseViewSet(viewsets.ModelViewSet):
-    queryset = Course.objects.all()
     serializer_class = CourseSerializer
+    permission_classes = [IsAuthenticated]
+
+    def perform_create(self, serializer):
+        """Заполнение поля owner данными текущего пользователя."""
+
+        new_course = serializer.save()
+        new_course.owner = self.request.user
+        new_course.save()
 
 
+class CourseViewSet(ModelViewSet):
+    """Представление для курса."""
+
+    serializer_class = CourseSerializer
+    queryset = Course.objects.all()
+    filter_backends = [DjangoFilterBackend]
+    permission_classes = [IsAuthenticated]
+
+    pagination_class = CustomPagination
+
+    def get_permissions(self):
+        if self.action == "create":
+            self.permission_classes = (~IsModer,)
+        elif self.action in ["update", "retrieve"]:
+            self.permission_classes = (IsModer | IsOwner,)
+        elif self.action == "destroy":
+            self.permission_classes = (~IsModer | IsOwner,)
+        return super().get_permissions()
+
+
+class CourseUpdateAPIView(UpdateAPIView):
+    """Обновление курса."""
+
+    serializer_class = CourseSerializer
+    queryset = Course.objects.all()
+    permission_classes = [IsModer]
+
+    def perform_update(self, serializer):
+        course = serializer.save()
+        subscription_message.delay(course.pk)
+
+
+class CourseDeleteAPIView(DestroyAPIView):
+    """Удаление курса."""
+
+    serializer_class = CourseSerializer
+    permission_classes = [IsOwner]
+
+
+# endregion
+
+
+# region CRUD для урока
 class LessonCreateAPIView(CreateAPIView):
-    serializer_class = LessonsSerializer
-    queryset = Lessons.objects.all()
+    """Создание урока."""
+
+    serializer_class = LessonSerializer
+    permission_classes = [IsAuthenticated]
+
+    def perform_create(self, serializer):
+        """Заполнение поля owner данными текущего пользователя."""
+
+        new_lesson = serializer.save()
+        new_lesson.owner = self.request.user
+        new_lesson.save()
 
 
 class LessonListAPIView(ListAPIView):
-    serializer_class = LessonsSerializer
-    queryset = Lessons.objects.all()
+    """Просмотр списка уроков."""
 
-
-class LessonUpdateAPIView(UpdateAPIView):
-    serializer_class = LessonsSerializer
-    queryset = Lessons.objects.all()
-
-
-class LessonDestroyAPIView(DestroyAPIView):
-    serializer_class = LessonsSerializer
-    queryset = Lessons.objects.all()
+    queryset = Lesson.objects.all()
+    serializer_class = LessonSerializer
+    filter_backends = [DjangoFilterBackend, OrderingFilter]
+    search_fields = ["name", "description", "course"]
+    ordering_fields = ["name"]
+    ordering = ["-name"]
+    permission_classes = [IsAuthenticated]
+    pagination_class = CustomPagination
 
 
 class LessonRetrieveAPIView(RetrieveAPIView):
-    serializer_class = LessonsSerializer
-    queryset = Lessons.objects.all()
+    """Просмотр одного урока."""
+
+    serializer_class = LessonSerializer
+    queryset = Lesson.objects.all()
+    permission_classes = [IsAuthenticated]
+
+
+class LessonUpdateAPIView(UpdateAPIView):
+    """Обновление одного урока."""
+
+    serializer_class = LessonSerializer
+    queryset = Lesson.objects.all()
+    permission_classes = [IsModer | IsOwner]
+    filter_backends = [DjangoFilterBackend]
+
+
+class LessonDeleteAPIView(DestroyAPIView):
+    """Удаление урока."""
+
+    queryset = Lesson.objects.all()
+    permission_classes = [IsOwner]
+    filter_backends = [SearchFilter, OrderingFilter]
+
+
+class SubscribeView(APIView):
+    """Добавление и удаление подписки пользователя."""
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        course_id = request.data.get("course_id")
+        course = get_object_or_404(Course, id=course_id)
+
+        subscribe = Subscribe.objects.filter(user=user, course=course)
+
+        if subscribe.exists():
+            subscribe.delete()
+            return Response(status=204)
+        else:
+            Subscribe.objects.create(user=user, course=course)
+            return Response(status=201)
+
+
+class ProductPriceCreateAPIView(CreateAPIView):
+    """Создание цены продукта."""
+
+    serializer_class = PaymentsSerializer
+    queryset = CustomUser.objects.all()
+    permission_classes = [AllowAny]
+
+    def perform_create(self, serializer):
+        pay = serializer.save(user=self.request.user)
+        price = create_stripe_price_amount(pay.product_name, pay.amount)
+        session_id, session_link = create_stripe_session(price)
+        pay.session_id = session_id
+        pay.link = session_link
+        pay.save()

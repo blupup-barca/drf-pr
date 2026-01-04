@@ -1,52 +1,84 @@
-from django.conf import settings
 from django.db import models
+from django.db.models import RESTRICT, SET_NULL, CASCADE
+
+from config.settings import AUTH_USER_MODEL
 
 
 class Course(models.Model):
-    title = models.CharField(max_length=50, verbose_name="название")
-    image = models.ImageField(
-        upload_to="course_image/", blank=True, null=True, verbose_name="картинка"
-    )
-    description = models.TextField(verbose_name="описание")
+    """Курс"""
+
+    name = models.CharField(unique=True, max_length=150)
+    description = models.TextField(max_length=1000)
     owner = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
+        "users.CustomUser",
+        on_delete=SET_NULL,
         blank=True,
+        null=True,
         verbose_name="владелец",
     )
+    preview = models.ImageField(
+        upload_to="images/", null=True, blank=True, verbose_name="Изображение"
+    )
+    created_at = models.DateTimeField(auto_now=True, verbose_name="Добавлен")
+    updated_at = models.DateTimeField(auto_now_add=True, verbose_name="Изменён")
 
     def __str__(self):
-        return f"{self.title}"
+        return f"{self.name}"
 
     class Meta:
-        verbose_name = "курс"
-        verbose_name_plural = "курсы"
-        ordering = ["title"]
+        verbose_name = "Курс"
+        verbose_name_plural = "Курсы"
+        ordering = ["name"]
 
 
-class Lessons(models.Model):
-    title = models.CharField(max_length=100, verbose_name="название")
-    description = models.TextField(verbose_name="описание")
-    image = models.ImageField(
-        upload_to="lessons_image/", blank=True, null=True, verbose_name="картинка"
-    )
-    video_url = models.URLField(verbose_name="ссылка на видео", blank=True, null=True)
-    course = models.ForeignKey(
-        Course, on_delete=models.CASCADE, related_name="lessons", verbose_name="курс"
-    )
+class Lesson(models.Model):
+    """Урок"""
+
+    name = models.CharField(unique=True, max_length=150)
+    description = models.TextField(max_length=1000)
     owner = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
+        "users.CustomUser",
+        on_delete=SET_NULL,
         blank=True,
+        null=True,
         verbose_name="владелец",
     )
+    preview = models.ImageField(
+        upload_to="images/", null=True, blank=True, verbose_name="Изображение"
+    )
+    video_url = models.URLField(null=True, blank=True, verbose_name="Ссылка на видео")
+    course = models.ForeignKey(Course, on_delete=RESTRICT, verbose_name="Курс")
+    created_at = models.DateTimeField(auto_now=True, verbose_name="Добавлен")
+    updated_at = models.DateTimeField(auto_now_add=True, verbose_name="Изменён")
 
     def __str__(self):
-        return f"{self.title} ({self.course.title})"
+        return f"{self.name}"
 
     class Meta:
-        verbose_name = "урок"
-        verbose_name_plural = "уроки"
-        ordering = ["title", "course"]
+        verbose_name = "Урок"
+        verbose_name_plural = "Уроки"
+        ordering = ["name"]
+
+
+class Subscribe(models.Model):
+    """Подписка."""
+
+    user = models.ForeignKey(
+        AUTH_USER_MODEL, on_delete=CASCADE, verbose_name="Пользователь"
+    )
+    course = models.ForeignKey(Course, on_delete=CASCADE, verbose_name="Курс")
+    status_sub = models.BooleanField(default=True, verbose_name="Статус подписки")
+    description = models.TextField(
+        max_length=150, blank=True, null=True, verbose_name="Описание"
+    )
+    created_at = models.DateTimeField(auto_now=True, verbose_name="Добавлена")
+    updated_at = models.DateTimeField(auto_now_add=True, verbose_name="Изменена")
+
+    def __str__(self):
+        return f"{self.user} {self.course}"
+
+    class Meta:
+        verbose_name = "Подписка"
+        verbose_name_plural = "Подписки"
+        unique_together = ["user", "course"]
+        ordering = ["user"]
